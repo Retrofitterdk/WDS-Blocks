@@ -1,17 +1,15 @@
 /**
  * External dependencies
  */
-import _isUndefined from 'lodash/isUndefined';
-import _pickBy from 'lodash/pickBy';
+import isUndefined from 'lodash/isUndefined';
+import pickBy from 'lodash/pickBy';
 import moment from 'moment';
 import classnames from 'classnames';
-import { stringify } from 'querystringify';
 
 /**
  * WordPress dependencies
  */
 const { Component } = wp.element;
-
 const {
 	PanelBody,
 	Placeholder,
@@ -20,16 +18,15 @@ const {
 	Spinner,
 	ToggleControl,
 	Toolbar,
-	withAPIData,
 } = wp.components;
 const { __ } = wp.i18n;
-const { decodeEntities } = wp.utils;
-
+const { decodeEntities } = wp.htmlEntities;
 const {
 	InspectorControls,
 	BlockControls,
 	BlockAlignmentToolbar,
-} = wp.blocks;
+} = wp.editor;
+const { withSelect } = wp.data;
 
 /**
  * Internal dependencies
@@ -50,7 +47,7 @@ import MultiSelect from '../../components/multiselect';
 import BackgroundOptions, { BackgroundOptionsClasses, BackgroundOptionsInlineStyles, BackgroundOptionsVideoOutput } from '../../components/background-options';
 
 // Import all of our Text Options requirements.
-import TextOptions, { TextOptionsInlineStyles } from '../../components/text-options';
+import TextOptions, { TextOptionsInlineStyles, TextOptionsClasses } from '../../components/text-options';
 
 // Import all of our Other Options requirements.
 import OtherOptions, { OtherOptionsClasses } from '../../components/other-options';
@@ -85,11 +82,10 @@ class RecentPostsBlock extends Component {
 	render() {
 		const maxItems = DEFAULT_MAX_ITEMS;
 		const minItems = DEFAULT_MIN_ITEMS;
-		const latestPosts = this.props.latestPosts.data;
-		const { attributes, setAttributes } = this.props;
+		const { attributes, setAttributes, latestPosts } = this.props;
 		const { displayPostDate, align, postLayout, columns, order, orderby, postsToShow } = attributes;
 
-		const inspectorControls = !! this.props.focus && (
+		const inspectorControls = !! this.props.isSelected && (
 			<InspectorControls key="inspector">
 				<PanelBody title={ __( 'Recent Posts Settings' ) }>
 					{
@@ -131,7 +127,7 @@ class RecentPostsBlock extends Component {
 								} }
 							/>
 						) }
-					{ !! this.props.focus ? (
+					{ !! this.props.isSelected ? (
 						<MultiSelect attributes={ this.props.attributes } onCategoryChange={ this.onCategoryChange } />
 					) : ( null ) }
 					{
@@ -211,7 +207,7 @@ class RecentPostsBlock extends Component {
 
 		return [
 			inspectorControls,
-			!! this.props.focus && (
+			!! this.props.isSelected && (
 				<BlockControls key="controls">
 					<BlockAlignmentToolbar
 						value={ align }
@@ -229,6 +225,7 @@ class RecentPostsBlock extends Component {
 					this.props.className,
 					...BackgroundOptionsClasses( this.props ),
 					...OtherOptionsClasses( this.props ),
+					...TextOptionsClasses( this.props ),
 				) }
 				style={ {
 					...BackgroundOptionsInlineStyles( this.props ),
@@ -286,22 +283,25 @@ class RecentPostsBlock extends Component {
 	}
 }
 
-export default withAPIData( ( props ) => {
+export default withSelect( ( select, props ) => {
 	const { postsToShow, order, orderby, taxonomies } = props.attributes;
 	const decodedTaxonomies = taxonomies ? JSON.parse( taxonomies ) : {};
 
 	// This can be made to be much more flexible and allow for custom taxonomies and the like. Phase 2!
 	const tags = decodedTaxonomies.post_tag && 0 < decodedTaxonomies.post_tag.length ? decodedTaxonomies.post_tag.map( tag => tag.id ) : undefined;
 	const categories = decodedTaxonomies.category && 0 < decodedTaxonomies.category.length ? decodedTaxonomies.category.map( category => category.id ) : undefined;
-	const latestPostsQuery = stringify( _pickBy( {
+
+	const { getEntityRecords } = select( 'core' );
+	const latestPostsQuery = pickBy( {
 		_embed: 'embed',
 		orderby,
 		order,
 		tags,
 		categories,
 		per_page: postsToShow, // eslint-disable-line
-	}, value => ! _isUndefined( value ) ) );
+	}, ( value ) => ! isUndefined( value ) );
+
 	return {
-		latestPosts: `/wp/v2/posts?${ latestPostsQuery }`,
+		latestPosts: getEntityRecords( 'postType', 'post', latestPostsQuery ),
 	};
 } )( RecentPostsBlock );

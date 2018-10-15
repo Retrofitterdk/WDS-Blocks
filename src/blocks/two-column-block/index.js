@@ -14,13 +14,16 @@ import classnames from 'classnames'; // Import NPM libraries here.
  */
 const { __ } = wp.i18n;
 const {
+	registerBlockType,
+} = wp.blocks;
+
+const {
 	AlignmentToolbar,
 	BlockControls,
 	InspectorControls,
 	MediaUpload,
-	registerBlockType,
 	RichText,
-} = wp.blocks;
+} = wp.editor;
 
 const {
 	Button,
@@ -44,7 +47,7 @@ import BlockTitle, { BlockTitleAttributes, BlockTitleOutput } from '../../compon
 import BackgroundOptions, { BackgroundOptionsAttributes, BackgroundOptionsClasses, BackgroundOptionsInlineStyles, BackgroundOptionsVideoOutput } from '../../components/background-options';
 
 // Import all of our Text Options requirements.
-import TextOptions, { TextOptionsAttributes, TextOptionsInlineStyles } from '../../components/text-options';
+import TextOptions, { TextOptionsAttributes, TextOptionsInlineStyles, TextOptionsClasses } from '../../components/text-options';
 
 // Import all of our Other Options requirements.
 import OtherOptions, { OtherOptionsAttributes, OtherOptionsClasses } from '../../components/other-options';
@@ -64,7 +67,7 @@ export default registerBlockType( 'wds/two-column', { // Namespaced with 'wds/',
 	// Description: Write a quick description.
 	description: __( 'A block to display two equal-width columns containing a combination of text and/or an image.' ),
 	// Category options: common, formatting, layout, widgets, embed.
-	category: 'layout',
+	category: 'wds-blocks',
 	// Can use a Dashicon (see https://developer.wordpress.org/resource/dashicons/) or an imported SVG.
 	icon: 'grid-view',
 	// Limit to 3 keywords/phrases. Users will see your block when they search using these keywords.
@@ -373,6 +376,7 @@ export default registerBlockType( 'wds/two-column', { // Namespaced with 'wds/',
 					props.className,
 					...BackgroundOptionsClasses( props ),
 					...OtherOptionsClasses( props ),
+					...TextOptionsClasses( props ),
 				) }
 				style={ {
 					...BackgroundOptionsInlineStyles( props ),
@@ -538,7 +542,7 @@ export default registerBlockType( 'wds/two-column', { // Namespaced with 'wds/',
 				...TextOptionsAttributes,
 				...OtherOptionsAttributes,
 			},
-			save(props) {
+			save( props ) {
 				// Display the output of the Left content block.
 				function displayLeftContentOutput() {
 					return (
@@ -635,7 +639,7 @@ export default registerBlockType( 'wds/two-column', { // Namespaced with 'wds/',
 						</div>
 					</section>
 				);
-			}
-		}
-	]
+			},
+		},
+	],
 } );
